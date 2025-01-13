@@ -59,4 +59,20 @@ public class ClasseService {
             return ResponseDTO.error("Erreur lors de la recherche des classes: " + e.getMessage());
         }
     }
+
+    @Transactional(readOnly = true)
+    public ResponseDTO<Classe> rechercherParId(Integer id) {
+        try {
+            if (id == null) {
+                return ResponseDTO.error("L'ID de la classe est requis");
+            }
+
+            return classeRepository.findById(id)
+                    .map(ResponseDTO::success)
+                    .orElse(ResponseDTO.error("Aucune classe trouvée avec l'ID: " + id));
+
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors de la recherche de la classe: " + e.getMessage());
+        }
+    }
 }

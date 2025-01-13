@@ -4,6 +4,8 @@ import licence.projetlrb.Entities.Classe;
 import licence.projetlrb.Services.ClasseService;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,21 +19,104 @@ public class ClasseController {
     @Autowired
     private ClasseService classeService;
 
-    @PostMapping("/enregistrer")
+    @PostMapping(
+            value = "/enregistrer",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<ResponseDTO<Classe>> enregistrer(@RequestBody Classe classe) {
-        ResponseDTO<Classe> response = classeService.enregistrer(classe);
-        return ResponseEntity.ok(response);
+        try {
+            ResponseDTO<Classe> response = classeService.enregistrer(classe);
+            if (!response.isSuccess()) {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error("Une erreur est survenue lors de l'enregistrement: " + e.getMessage()));
+        }
     }
 
-    @DeleteMapping("/supprimer/{id}")
+    @DeleteMapping(
+            value = "/supprimer/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<ResponseDTO<Void>> supprimer(@PathVariable("id") Integer id) {
-        ResponseDTO<Void> response = classeService.supprimer(id);
-        return ResponseEntity.ok(response);
+        try {
+            ResponseDTO<Void> response = classeService.supprimer(id);
+            if (!response.isSuccess()) {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
+        }
     }
 
-    @GetMapping("/rechercherClasses")
+    @GetMapping(
+            value = "/rechercherClasses",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
     public ResponseEntity<ResponseDTO<List<Classe>>> rechercherClasses() {
-        ResponseDTO<List<Classe>> response = classeService.rechercherClasses();
-        return ResponseEntity.ok(response);
+        try {
+            ResponseDTO<List<Classe>> response = classeService.rechercherClasses();
+            if (!response.isSuccess()) {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping(
+            value = "/rechercher/{id}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public ResponseEntity<ResponseDTO<Classe>> rechercherParId(@PathVariable("id") Integer id) {
+        try {
+            ResponseDTO<Classe> response = classeService.rechercherParId(id);
+            if (!response.isSuccess()) {
+                return ResponseEntity.badRequest()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(response);
+            }
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
+        }
     }
 }
