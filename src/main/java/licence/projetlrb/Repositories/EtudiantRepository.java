@@ -1,4 +1,3 @@
-// EtudiantRepository.java
 package licence.projetlrb.Repositories;
 
 import licence.projetlrb.Entities.Etudiant;
@@ -9,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface EtudiantRepository extends JpaRepository<Etudiant, Integer> {
+    List<Etudiant> findByIdClasse(Integer idClasse);
+
     @Query("SELECT e FROM Etudiant e WHERE e.idClasse IS NULL")
     List<Etudiant> findDisponibles();
 }

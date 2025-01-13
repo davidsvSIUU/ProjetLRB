@@ -1,0 +1,25 @@
+/* src/main/resources/static/css/style.css */
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+.card {
+    margin-bottom: 20px;
+}
+
+.form-error {
+    color: red;
+    font-size: 0.875em;
+    margin-top: 5px;
+}
+
+.alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}

@@ -8,7 +8,6 @@ import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
 
 @Service
@@ -42,7 +41,7 @@ public class ClasseService {
 
             // Libérer les étudiants
             List<Etudiant> etudiants = etudiantRepository.findByIdClasse(idClasse);
-            etudiants.forEach(etudiant -> etudiant.setClasse(null));
+            etudiants.forEach(etudiant -> etudiant.setIdClasse(null));
             etudiantRepository.saveAll(etudiants);
 
             classeRepository.delete(classe);
