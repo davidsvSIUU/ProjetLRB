@@ -19,4 +19,19 @@ public class Matiere {
     @Column(name = "denomination", nullable = false, length = 100)
     private String denomination;
 
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getDenomination() {
+        return denomination;
+    }
+
+    public void setDenomination(String denomination) {
+        this.denomination = denomination;
+    }
 }
