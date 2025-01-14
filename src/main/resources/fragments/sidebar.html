@@ -1,0 +1,47 @@
+<div th:fragment="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <img th:src="@{/img/logo.png}" alt="Logo" class="logo">
+        <h3>Gestion Scolaire</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/dashboard}">
+                    <i class="mdi mdi-view-dashboard"></i>
+                    <span>Tableau de bord</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/etudiants}">
+                    <i class="mdi mdi-account-group"></i>
+                    <span>Étudiants</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/classes}">
+                    <i class="mdi mdi-school"></i>
+                    <span>Classes</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/matieres}">
+                    <i class="mdi mdi-book-open-variant"></i>
+                    <span>Matières</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/devoirs}">
+                    <i class="mdi mdi-file-document"></i>
+                    <span>Devoirs</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" th:href="@{/notations}">
+                    <i class="mdi mdi-chart-line"></i>
+                    <span>Notations</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</div>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="fragments/header :: header"></head>
+<body>
+<div class="wrapper">
+    <div th:replace="fragments/sidebar :: sidebar"></div>
+
+    <div class="main-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Étudiants</h5>
+                            <p class="card-text display-4" th:text="${totalEtudiants}">150</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Classes</h5>
+                            <p class="card-text display-4" th:text="${totalClasses}">8</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Matières</h5>
+                            <p class="card-text display-4" th:text="${totalMatieres}">12</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Total Devoirs</h5>
+                            <p class="card-text display-4" th:text="${totalDevoirs}">45</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            Moyennes par Classe
+                        </div>
+                        <div class="card-body">
+                            <canvas id="moyennesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Dernières Notes
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Étudiant</th>
+                                        <th>Matière</th>
+                                        <th>Note</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr th:each="notation : ${dernieresNotations}">
+                                        <td th:text="${notation.etudiant.nom}">Dupont</td>
+                                        <td th:text="${notation.matiere.nom}">Mathématiques</td>
+                                        <td th:text="${notation.note}">15/20</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script th:src="@{/js/main.js}"></script>
+<script th:src="@{/js/charts.js}"></script>
+</body>
+</html>
