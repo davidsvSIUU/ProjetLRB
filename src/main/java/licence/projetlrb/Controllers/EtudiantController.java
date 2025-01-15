@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Contrôleur pour la gestion des étudiants
@@ -148,6 +149,30 @@ public class EtudiantController {
             return etudiantService.rechercherParId(id);
         } catch (Exception e) {
             return ResponseDTO.error(" la récupération de l'étudiant: " + e.getMessage());
+        }
+    }
+    /**
+     * Recherche des étudiants selon leur affectation à une classe
+     */
+    @GetMapping("/etudiant/rechercher/disponibilite")
+    @ResponseBody
+    public ResponseDTO<List<Etudiant>> rechercherEtudiantsDisponibles(@RequestParam boolean avecClasse) {
+        try {
+            List<Etudiant> etudiants = etudiantService.rechercherEtudiants().getData();
+            List<Etudiant> etudiantsFiltres;
+
+            if(avecClasse) {
+                etudiantsFiltres = etudiants.stream()
+                        .filter(e -> e.getIdClasse() != null)
+                        .collect(Collectors.toList());
+            } else {
+                etudiantsFiltres = etudiants.stream()
+                        .filter(e -> e.getIdClasse() == null)
+                        .collect(Collectors.toList());
+            }
+    return ResponseDTO.success(etudiantsFiltres);
+} catch (Exception e) {
+        return ResponseDTO.error("Erreur lors de la recherche des étudiants : " + e.getMessage());
         }
     }
 }
