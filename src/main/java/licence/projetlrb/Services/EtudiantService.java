@@ -1,14 +1,17 @@
 package licence.projetlrb.Services;
 
 import licence.projetlrb.Entities.Etudiant;
+import licence.projetlrb.Entities.Classe;
+import licence.projetlrb.Repositories.ClasseRepository;
 import licence.projetlrb.Repositories.EtudiantRepository;
 import licence.projetlrb.Repositories.NotationRepository;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -16,17 +19,18 @@ public class EtudiantService {
 
     private final EtudiantRepository etudiantRepository;
     private final NotationRepository notationRepository;
+    private final ClasseRepository classeRepository;
 
     @Autowired
-    public EtudiantService(EtudiantRepository etudiantRepository, NotationRepository notationRepository) {
+    public EtudiantService(EtudiantRepository etudiantRepository, NotationRepository notationRepository, ClasseRepository classeRepository) {
         this.etudiantRepository = etudiantRepository;
         this.notationRepository = notationRepository;
+        this.classeRepository = classeRepository;
     }
 
     @Transactional
     public ResponseDTO<Etudiant> enregistrer(Etudiant etudiant) {
         try {
-            // Validation des données
             if (etudiant == null) {
                 return ResponseDTO.error("L'étudiant ne peut pas être null");
             }
@@ -37,11 +41,15 @@ public class EtudiantService {
                 return ResponseDTO.error("Le prénom de l'étudiant est requis");
             }
 
-            // Nettoyage des données
+            // Nettoyage des champs
             etudiant.setNom(etudiant.getNom().trim());
             etudiant.setPrenom(etudiant.getPrenom().trim());
+
+            // Gestion de la photo
             if (etudiant.getPhoto() != null) {
-                etudiant.setPhoto(etudiant.getPhoto().trim());
+                String photoTrimmed = etudiant.getPhoto().trim();
+                // Si la photo est vide après le trim, on met null
+                etudiant.setPhoto(photoTrimmed.isEmpty() ? null : photoTrimmed);
             }
 
             Etudiant savedEtudiant = etudiantRepository.save(etudiant);
@@ -51,6 +59,37 @@ public class EtudiantService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public ResponseDTO<Map<String, Object>> rechercherEtudiantsAvecClasses() {
+        try {
+            List<Etudiant> etudiants = etudiantRepository.findAll();
+            Map<Integer, String> nomsClasses = new HashMap<>();
+
+            for (Etudiant etudiant : etudiants) {
+                if (etudiant.getIdClasse() != null) {
+                    String nomClasse = getNomClasse(etudiant.getIdClasse());
+                    nomsClasses.put(etudiant.getIdClasse(), nomClasse);
+                }
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("etudiants", etudiants);
+            result.put("nomsClasses", nomsClasses);
+
+            return ResponseDTO.success("Liste des étudiants récupérée avec succès", result);
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors de la recherche des étudiants: " + e.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public String getNomClasse(Integer idClasse) {
+        if (idClasse == null) return "Non assigné";
+        return classeRepository.findById(idClasse)
+                .map(Classe::getDenomination)
+                .orElse("Non assigné");
+    }
+
     @Transactional
     public ResponseDTO<Void> supprimer(Integer idEtudiant) {
         try {
@@ -58,16 +97,12 @@ public class EtudiantService {
                 return ResponseDTO.error("L'ID de l'étudiant ne peut pas être null");
             }
 
-            // Vérifier si l'étudiant existe
             Optional<Etudiant> etudiantOpt = etudiantRepository.findById(idEtudiant);
             if (etudiantOpt.isEmpty()) {
                 return ResponseDTO.error("Étudiant non trouvé avec l'ID: " + idEtudiant);
             }
 
-            // Supprimer toutes les notations de l'étudiant
             notationRepository.deleteByIdEtudiant(idEtudiant);
-
-            // Supprimer l'étudiant
             etudiantRepository.delete(etudiantOpt.get());
             return ResponseDTO.success("Étudiant supprimé avec succès", null);
         } catch (Exception e) {
@@ -75,6 +110,7 @@ public class EtudiantService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseDTO<List<Etudiant>> rechercherEtudiants() {
         try {
             List<Etudiant> etudiants = etudiantRepository.findAll();
@@ -84,15 +120,17 @@ public class EtudiantService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseDTO<List<Etudiant>> rechercherEtudiantsDisponibles() {
         try {
-            List<Etudiant> etudiants = etudiantRepository.findDisponibles();
+            List<Etudiant> etudiants = etudiantRepository.findByIdClasseIsNull();
             return ResponseDTO.success("Liste des étudiants disponibles récupérée avec succès", etudiants);
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de la recherche des étudiants disponibles: " + e.getMessage());
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseDTO<Etudiant> rechercherParId(Integer id) {
         try {
             if (id == null) {
@@ -110,6 +148,7 @@ public class EtudiantService {
         }
     }
 
+    @Transactional(readOnly = true)
     public ResponseDTO<List<Etudiant>> rechercherParNomOuPrenom(String terme) {
         try {
             if (terme == null || terme.trim().isEmpty()) {
