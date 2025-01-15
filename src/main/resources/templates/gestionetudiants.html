@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Étudiants</title>
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            margin-top: 80px;
+            padding: 20px;
+        }
+        .btn-actions {
+            min-width: 130px;
+        }
+        .dropdown-toggle::after {
+            margin-left: 8px;
+        }
+        .student-photo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img th:src="@{/img/logo.png}" alt="Logo" height="40">
+            GestionScolaire
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajouterEtudiantModal">
+                        <i class="mdi mdi-plus"></i> Ajouter un étudiant
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Table des étudiants -->
+<div class="container table-container">
+    <div class="card">
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Liste des Étudiants</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Prénom</th>
+                        <th>Classe</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="etudiant : ${etudiants}">
+                        <td>
+                            <img th:if="${etudiant.photo}" th:src="${etudiant.photo}" class="student-photo" alt="Photo">
+                            <i th:unless="${etudiant.photo}" class="mdi mdi-account-circle" style="font-size: 40px;"></i>
+                        </td>
+                        <td th:text="${etudiant.id}"></td>
+                        <td th:text="${etudiant.nom}"></td>
+                        <td th:text="${etudiant.prenom}"></td>
+                        <td th:text="${etudiant.idClasse ?: 'Non assigné'}"></td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-secondary dropdown-toggle btn-actions" type="button" data-bs-toggle="dropdown">
+                                    Gérer
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="#" th:onclick="'modifierEtudiant(' + ${etudiant.id} + ')'">
+                                            <i class="mdi mdi-pencil"></i> Modifier
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="#"
+                                           th:onclick="'confirmerSuppression(' + ${etudiant.id} + ')'">
+                                            <i class="mdi mdi-delete"></i> Supprimer
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Étudiant -->
+<div class="modal fade" id="ajouterEtudiantModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un étudiant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ajouterEtudiantForm">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-control" name="prenom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Photo (URL)</label>
+                        <input type="url" class="form-control" name="photo">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="ajouterEtudiant()">Ajouter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Étudiant -->
+<div class="modal fade" id="modifierEtudiantModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier l'étudiant</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="modifierEtudiantForm">
+                    <input type="hidden" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="nom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-control" name="prenom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Photo (URL)</label>
+                        <input type="url" class="form-control" name="photo">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="sauvegarderModifications()">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Fonctions pour gérer les étudiants
+    function ajouterEtudiant() {
+        const form = document.getElementById('ajouterEtudiantForm');
+        const formData = new FormData(form);
+        const etudiant = Object.fromEntries(formData);
+
+        fetch('/api/etudiant/enregistrer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(etudiant)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue');
+            });
+    }
+
+    function modifierEtudiant(id) {
+        // Récupérer les données de l'étudiant et remplir le formulaire
+        fetch(`/api/etudiant/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const form = document.getElementById('modifierEtudiantForm');
+                    form.id.value = data.data.id;
+                    form.nom.value = data.data.nom;
+                    form.prenom.value = data.data.prenom;
+                    form.photo.value = data.data.photo || '';
+
+                    new bootstrap.Modal(document.getElementById('modifierEtudiantModal')).show();
+                }
+            });
+    }
+
+    function sauvegarderModifications() {
+        const form = document.getElementById('modifierEtudiantForm');
+        const formData = new FormData(form);
+        const etudiant = Object.fromEntries(formData);
+
+        fetch('/api/etudiant/enregistrer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(etudiant)
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            });
+    }
+
+    function confirmerSuppression(id) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?')) {
+            fetch(`/api/etudiant/supprimer/${id}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -4,40 +4,119 @@ import licence.projetlrb.Entities.Etudiant;
 import licence.projetlrb.Services.EtudiantService;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/etudiant")
-@CrossOrigin(origins = "*")
+/**
+ * Contrôleur pour la gestion des étudiants
+ */
+@Controller
 public class EtudiantController {
 
+    private final EtudiantService etudiantService;
+
     @Autowired
-    private EtudiantService etudiantService;
-
-    @PostMapping("/enregistrer")
-    public ResponseEntity<ResponseDTO<Etudiant>> enregistrer(@RequestBody Etudiant etudiant) {
-        ResponseDTO<Etudiant> response = etudiantService.enregistrer(etudiant);
-        return ResponseEntity.ok(response);
+    public EtudiantController(EtudiantService etudiantService) {
+        this.etudiantService = etudiantService;
     }
 
-    @DeleteMapping("/supprimer/{id}")
-    public ResponseEntity<ResponseDTO<Void>> supprimer(@PathVariable("id") Integer id) {
-        ResponseDTO<Void> response = etudiantService.supprimer(id);
-        return ResponseEntity.ok(response);
+    /**
+     * Page d'accueil
+     */
+    @GetMapping("/")
+    public String index() {
+        return "index";
     }
 
-    @GetMapping("/rechercherEtudiants")
-    public ResponseEntity<ResponseDTO<List<Etudiant>>> rechercherEtudiants() {
+    /**
+     * Affiche la page de gestion des étudiants
+     */
+    @GetMapping("/gestionetudiants")
+    public String gestionEtudiants(Model model) {
         ResponseDTO<List<Etudiant>> response = etudiantService.rechercherEtudiants();
-        return ResponseEntity.ok(response);
+        if (response.isSuccess()) {
+            model.addAttribute("etudiants", response.getData());
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        return "gestionetudiants";
     }
 
-    @GetMapping("/rechercherEtudiantsDisponibles")
-    public ResponseEntity<ResponseDTO<List<Etudiant>>> rechercherEtudiantsDisponibles() {
-        ResponseDTO<List<Etudiant>> response = etudiantService.rechercherEtudiantsDisponibles();
-        return ResponseEntity.ok(response);
+    /**
+     * Enregistre ou met à jour un étudiant
+     */
+    @PostMapping("/etudiant/enregistrer")
+    public String enregistrer(@ModelAttribute Etudiant etudiant, Model model) {
+        try {
+            ResponseDTO<Etudiant> response = etudiantService.enregistrer(etudiant);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Étudiant enregistré avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de l'enregistrement: " + e.getMessage());
+        }
+        return "redirect:/gestionetudiants";
+    }
+
+    /**
+     * Supprime un étudiant
+     */
+    @PostMapping("/etudiant/supprimer/{id}")
+    public String supprimer(@PathVariable("id") Integer id, Model model) {
+        try {
+            ResponseDTO<Void> response = etudiantService.supprimer(id);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Étudiant supprimé avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de la suppression: " + e.getMessage());
+        }
+        return "redirect:/gestionetudiants";
+    }
+
+    /**
+     * Recherche des étudiants par nom ou prénom
+     */
+    @GetMapping("/etudiant/rechercher")
+    public String rechercherParNomOuPrenom(@RequestParam String terme, Model model) {
+        try {
+            ResponseDTO<List<Etudiant>> response = etudiantService.rechercherParNomOuPrenom(terme);
+            if (response.isSuccess()) {
+                model.addAttribute("etudiants", response.getData());
+                model.addAttribute("termeRecherche", terme);
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de la recherche: " + e.getMessage());
+        }
+        return "gestionetudiants";
+    }
+
+    /**
+     * Affiche le formulaire de modification d'un étudiant
+     */
+    @GetMapping("/etudiant/modifier/{id}")
+    public String afficherModification(@PathVariable("id") Integer id, Model model) {
+        try {
+            ResponseDTO<Etudiant> response = etudiantService.rechercherParId(id);
+            if (response.isSuccess()) {
+                model.addAttribute("etudiant", response.getData());
+            } else {
+                model.addAttribute("error", response.getMessage());
+                return "redirect:/gestionetudiants";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de la recherche: " + e.getMessage());
+            return "redirect:/gestionetudiants";
+        }
+        return "gestionetudiants";
     }
 }
