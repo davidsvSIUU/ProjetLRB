@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Classes</title>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            margin-top: 80px;
+            padding: 20px;
+        }
+        .btn-actions {
+            min-width: 130px;
+        }
+        .dropdown-toggle::after {
+            margin-left: 8px;
+        }
+        .search-container {
+            max-width: 300px;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        .modal-header {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top bg-light shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img th:src="@{/img/logo.png}" alt="Logo" height="40">
+            GestionScolaire
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajouterClasseModal">
+                        <i class="mdi mdi-plus"></i> Ajouter une classe
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Messages de notification -->
+<div class="container mt-5 pt-3">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="mdi mdi-alert-circle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="mdi mdi-check-circle"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- Table des classes -->
+<div class="container table-container">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Liste des Classes</h4>
+                <div class="search-container">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+                        <input type="text" class="form-control" placeholder="Rechercher une classe..."
+                               id="searchInput" th:value="${searchTerm}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th>Dénomination</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(classes)}">
+                        <td colspan="2" class="text-center py-4">
+                            <i class="mdi mdi-information text-info" style="font-size: 24px;"></i>
+                            <p class="mb-0">Aucune classe trouvée</p>
+                        </td>
+                    </tr>
+                    <tr th:each="classe : ${classes}">
+                        <td th:text="${classe.denomination}"></td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle btn-actions" type="button" data-bs-toggle="dropdown">
+                                    <i class="mdi mdi-cog"></i> Gérer
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#" th:onclick="'modifierClasse(' + ${classe.id} + ')'">
+                                            <i class="mdi mdi-pencil text-primary"></i> Modifier
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form th:action="@{/classe/supprimer/{id}(id=${classe.id})}"
+                                              method="post" style="display: inline;"
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette classe ?');">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="mdi mdi-delete"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Classe -->
+<div class="modal fade" id="ajouterClasseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter une classe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/classe/enregistrer}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Dénomination</label>
+                        <input type="text" class="form-control" name="denomination" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Classe -->
+<div class="modal fade" id="modifierClasseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier la classe</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/classe/enregistrer}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="modif-id" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Dénomination</label>
+                        <input type="text" class="form-control" id="modif-denomination" name="denomination" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function modifierClasse(id) {
+        fetch(`/classe/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.success && data.data) {
+                    const classe = data.data;
+
+                    document.getElementById('modif-id').value = classe.id || '';
+                    document.getElementById('modif-denomination').value = classe.denomination || '';
+
+                    const modal = new bootstrap.Modal(document.getElementById('modifierClasseModal'));
+                    modal.show();
+                } else {
+                    alert(data.message || 'Erreur lors de la récupération des données de la classe');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue lors de la récupération des données');
+            });
+    }
+
+    document.getElementById('searchInput')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value;
+        if (searchTerm.length >= 2) {
+            // Utilisez la même API de recherche si nécessaire, sinon adaptez-la ou commentez cette partie
+            //  fetch(`/classe/rechercher?terme=${encodeURIComponent(searchTerm)}`)
+            //    .then(response => response.json())
+            //    .then(data => {
+            //        if (data.success) {
+            //            // Mettre à jour le tableau
+            //            // Cette partie nécessite une implémentation côté serveur
+            //        }
+            //    })
+            //    .catch(error => console.error('Erreur:', error));
+        }
+    });
+</script>
+
+</body>
+</html>

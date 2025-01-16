@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,7 +28,7 @@ public class DevoirService {
     private NotationRepository notationRepository;
 
     @Transactional
-    public ResponseDTO<Devoir> enregistrer(Devoir devoir) {
+    public ResponseDTO<Devoir> enregistrer(Devoir devoir, List<String> pointsParPartie) {
         try {
             if (devoir.getType() == null || devoir.getType().trim().isEmpty()) {
                 return ResponseDTO.error("Le type du devoir est requis");
@@ -45,19 +47,27 @@ public class DevoirService {
             }
 
             Devoir savedDevoir= devoirRepository.save(devoir);
+            // Enregistrement des parties de devoir
+            if (pointsParPartie != null && !pointsParPartie.isEmpty()) {
+                for (String points : pointsParPartie) {
+                    Partie_Devoir partie = new Partie_Devoir();
+                    partie.setIdDevoir(savedDevoir.getId());
+                    partie.setPoints(new BigDecimal(points));
+                    partieDevoirRepository.save(partie);
+                }
+            }
             return ResponseDTO.success(savedDevoir);
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de l'enregistrement du devoir: " + e.getMessage());
         }
     }
-
     @Transactional
     public ResponseDTO<Void> supprimer(Integer idDevoir) {
         try {
             Devoir devoir = devoirRepository.findById(idDevoir)
                     .orElseThrow(() -> new RuntimeException("Devoir non trouvé"));
 
-            // Supprimer les notations associées
+            // Supprimer les parties de devoirs et leurs notations associées
             List<Partie_Devoir> parties = partieDevoirRepository.findByIdDevoir(idDevoir);
             for (Partie_Devoir partie : parties) {
                 List<Notation> notations = notationRepository.findByIdPartie(partie.getId());
@@ -95,6 +105,15 @@ public class DevoirService {
 
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de la recherche du devoir: " + e.getMessage());
+        }
+    }
+    @Transactional(readOnly = true)
+    public ResponseDTO<List<Partie_Devoir>> rechercherPartiesParId(Integer id) {
+        try {
+            List<Partie_Devoir> parties = partieDevoirRepository.findByIdDevoir(id);
+            return ResponseDTO.success(parties);
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors de la recherche des parties du devoir: " + e.getMessage());
         }
     }
 }
