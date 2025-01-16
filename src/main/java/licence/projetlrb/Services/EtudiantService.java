@@ -2,6 +2,7 @@ package licence.projetlrb.Services;
 
 import licence.projetlrb.Entities.Etudiant;
 import licence.projetlrb.Entities.Classe;
+import licence.projetlrb.Entities.Notation;
 import licence.projetlrb.Repositories.ClasseRepository;
 import licence.projetlrb.Repositories.EtudiantRepository;
 import licence.projetlrb.Repositories.NotationRepository;
@@ -101,8 +102,9 @@ public class EtudiantService {
             if (etudiantOpt.isEmpty()) {
                 return ResponseDTO.error("Étudiant non trouvé avec l'ID: " + idEtudiant);
             }
-
-            notationRepository.deleteByIdEtudiant(idEtudiant);
+            // Supprime toutes les notations de l'étudiant
+            List<Notation> notations = notationRepository.findByIdEtudiant(idEtudiant);
+            notationRepository.deleteAll(notations);
             etudiantRepository.delete(etudiantOpt.get());
             return ResponseDTO.success("Étudiant supprimé avec succès", null);
         } catch (Exception e) {

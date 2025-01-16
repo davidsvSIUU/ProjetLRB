@@ -5,10 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
-public interface NotationRepository extends JpaRepository<Notation, Integer> {
-    void deleteByIdEtudiant(Integer idEtudiant);
-    List<Notation> findByIdPartie(Integer idPartie);
-    List<Notation> findByIdEtudiant(Integer idEtudiant);
+public interface NotationRepository extends JpaRepository<Notation, Long> {
+    Optional<Notation> findByIdEtudiantAndIdDevoir(Integer idEtudiant, Integer idDevoir);
+    List<Notation> findByIdDevoir(Integer idDevoir);
+
+    List<Notation> findByIdEtudiant(Integer id);
 }

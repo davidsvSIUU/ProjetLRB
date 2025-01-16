@@ -1,31 +1,41 @@
 package licence.projetlrb.Services;
 
+import licence.projetlrb.DTO.ResponseDTO;
 import licence.projetlrb.Entities.Devoir;
+import licence.projetlrb.Entities.Etudiant;
 import licence.projetlrb.Entities.Notation;
 import licence.projetlrb.Entities.Partie_Devoir;
 import licence.projetlrb.Repositories.DevoirRepository;
+import licence.projetlrb.Repositories.EtudiantRepository;
 import licence.projetlrb.Repositories.NotationRepository;
 import licence.projetlrb.Repositories.PartieDevoirRepository;
-import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class DevoirService {
 
-    @Autowired
-    private DevoirRepository devoirRepository;
+    private final DevoirRepository devoirRepository;
+    private final PartieDevoirRepository partieDevoirRepository;
+    private final NotationRepository notationRepository;
+    private final EtudiantRepository etudiantRepository;
 
     @Autowired
-    private PartieDevoirRepository partieDevoirRepository;
+    public DevoirService(DevoirRepository devoirRepository,
+                         PartieDevoirRepository partieDevoirRepository,
+                         NotationRepository notationRepository,
+                         EtudiantRepository etudiantRepository) {
+        this.devoirRepository = devoirRepository;
+        this.partieDevoirRepository = partieDevoirRepository;
+        this.notationRepository = notationRepository;
+        this.etudiantRepository = etudiantRepository;
+    }
 
-    @Autowired
-    private NotationRepository notationRepository;
 
     @Transactional
     public ResponseDTO<Devoir> enregistrer(Devoir devoir, List<String> pointsParPartie) {
@@ -46,7 +56,7 @@ public class DevoirService {
                 return ResponseDTO.error("L'ID de la matière est requis");
             }
 
-            Devoir savedDevoir= devoirRepository.save(devoir);
+            Devoir savedDevoir = devoirRepository.save(devoir);
             // Enregistrement des parties de devoir
             if (pointsParPartie != null && !pointsParPartie.isEmpty()) {
                 for (String points : pointsParPartie) {
@@ -61,6 +71,7 @@ public class DevoirService {
             return ResponseDTO.error("Erreur lors de l'enregistrement du devoir: " + e.getMessage());
         }
     }
+
     @Transactional
     public ResponseDTO<Void> supprimer(Integer idDevoir) {
         try {
@@ -70,18 +81,21 @@ public class DevoirService {
             // Supprimer les parties de devoirs et leurs notations associées
             List<Partie_Devoir> parties = partieDevoirRepository.findByIdDevoir(idDevoir);
             for (Partie_Devoir partie : parties) {
-                List<Notation> notations = notationRepository.findByIdPartie(partie.getId());
-                notationRepository.deleteAll(notations);
+                List<Etudiant> etudiants = etudiantRepository.findAll();
+                for (Etudiant etudiant : etudiants){
+                    List<Notation> notations = notationRepository.findByIdEtudiant(etudiant.getId());
+                    notationRepository.deleteAll(notations);
+                }
+
             }
             partieDevoirRepository.deleteAll(parties);
             devoirRepository.delete(devoir);
-
-
             return ResponseDTO.success(null);
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de la suppression du devoir: " + e.getMessage());
         }
     }
+
 
     public ResponseDTO<List<Devoir>> rechercherDevoirs() {
         try {
@@ -107,6 +121,7 @@ public class DevoirService {
             return ResponseDTO.error("Erreur lors de la recherche du devoir: " + e.getMessage());
         }
     }
+
     @Transactional(readOnly = true)
     public ResponseDTO<List<Partie_Devoir>> rechercherPartiesParId(Integer id) {
         try {

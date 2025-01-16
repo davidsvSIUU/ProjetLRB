@@ -9,7 +9,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 @RestController
@@ -25,9 +24,9 @@ public class NotationController {
             consumes = MediaType.APPLICATION_JSON_VALUE,
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    public ResponseEntity<ResponseDTO<Notation>> enregistrer(@RequestBody Notation notation) {
+    public ResponseEntity<ResponseDTO<Notation>> enregistrer(@RequestBody Map<String, Object> notationData) {
         try {
-            ResponseDTO<Notation> response = notationService.enregistrer(notation);
+            ResponseDTO<Notation> response = notationService.enregistrer(notationData);
             if (!response.isSuccess()) {
                 return ResponseEntity.badRequest()
                         .contentType(MediaType.APPLICATION_JSON)
@@ -72,82 +71,4 @@ public class NotationController {
                     .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
         }
     }
-/*
-    @GetMapping(
-            value = "/creerBulletinDeNoteParEtudiant/{idEtudiant}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Map<Integer, Map<String, BigDecimal>>>> creerBulletinDeNoteParEtudiant(@PathVariable("idEtudiant") Integer idEtudiant) {
-        try {
-            ResponseDTO<Map<Integer, Map<String, BigDecimal>>> response = notationService.creerBulletinDeNoteParEtudiant(idEtudiant);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        }  catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la création du bulletin de note: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping(
-            value = "/rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant/{idEtudiant}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Map<Integer, Map<String, BigDecimal>>>> rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant(@PathVariable("idEtudiant") Integer idEtudiant) {
-        try {
-            ResponseDTO<Map<Integer, Map<String, BigDecimal>>> response = notationService.rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant(idEtudiant);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        }  catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche des notes et moyennes par devoir: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping(
-            value = "/rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant/{idEtudiant}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Map<String, BigDecimal>>> rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant(@PathVariable("idEtudiant") Integer idEtudiant) {
-        try {
-            ResponseDTO<Map<String, BigDecimal>> response = notationService.rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant(idEtudiant);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
-        }  catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche des moyennes par matière: " + e.getMessage()));
-        }
-    }
-*/}
+}

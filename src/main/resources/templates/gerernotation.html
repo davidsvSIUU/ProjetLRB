@@ -145,8 +145,7 @@
             <form id="formNotation" th:action="@{/api/notation/enregistrer}" method="post">
                 <div class="modal-body">
                     <input type="hidden" id="idEtudiant" name="idEtudiant">
-                    <input type="hidden" id="idPartie" name="idPartie">
-
+                    <input type="hidden" id="idDevoir" name="idDevoir" th:value="${devoir.id}">
                     <div class="mb-3">
                         <label class="form-label">Note</label>
                         <input type="number"
@@ -171,7 +170,6 @@
 <script>
     function ouvrirModalNotation(idEtudiant) {
         document.getElementById('idEtudiant').value = idEtudiant;
-        document.getElementById('idPartie').value = document.getElementById('partieActuelle').value;
         const modal = new bootstrap.Modal(document.getElementById('modalNotation'));
         modal.show();
     }
@@ -181,8 +179,8 @@
 
         const formData = {
             idEtudiant: document.getElementById('idEtudiant').value,
-            idPartie: document.getElementById('idPartie').value,
-            note: document.querySelector('input[name="note"]').value
+            note: document.querySelector('input[name="note"]').value,
+            idDevoir: document.getElementById('idDevoir').value
         };
 
         fetch('/api/notation/enregistrer', {

@@ -181,7 +181,8 @@ public class DevoirController {
 
     @PostMapping("/api/notation/enregistrer")
     @ResponseBody
-    public ResponseDTO<Notation> enregistrerNotation(@RequestBody Notation notation) {
-        return notationService.enregistrer(notation);
+    public ResponseDTO<Notation> enregistrerNotation(@RequestBody Map<String, Object> notationData) {
+        return notationService.enregistrer(notationData);
     }
+
 }

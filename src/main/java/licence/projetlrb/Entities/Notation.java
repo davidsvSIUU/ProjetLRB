@@ -1,9 +1,6 @@
 package licence.projetlrb.Entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,23 +12,23 @@ import java.math.BigDecimal;
 @Table(name = "notation")
 public class Notation {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_notation", nullable = false)
-    private Integer id;
+    private Long id;
 
     @Column(name = "id_etudiant", nullable = false)
     private Integer idEtudiant;
-
-    @Column(name = "id_partie", nullable = false)
-    private Integer idPartie;
+    @Column(name = "id_devoir", nullable = false)
+    private Integer idDevoir;
 
     @Column(name = "note", nullable = false, precision = 4, scale = 2)
     private BigDecimal note;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -43,12 +40,12 @@ public class Notation {
         this.idEtudiant = idEtudiant;
     }
 
-    public Integer getIdPartie() {
-        return idPartie;
+    public Integer getIdDevoir() {
+        return idDevoir;
     }
 
-    public void setIdPartie(Integer idPartie) {
-        this.idPartie = idPartie;
+    public void setIdDevoir(Integer idDevoir) {
+        this.idDevoir = idDevoir;
     }
 
     public BigDecimal getNote() {
