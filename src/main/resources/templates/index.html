@@ -62,16 +62,7 @@
                 <h1 class="display-4 fw-bold">Gérez votre établissement efficacement</h1>
                 <p class="lead mb-4">Une solution complète pour la gestion des étudiants, des classes, des devoirs et des notes.</p>
                 <div class="d-flex gap-3">
-                    <a th:href="@{/gestionetudiants}" class="btn btn-primary btn-lg px-4">
-                        Etudiants
-                    </a>
-                    <a th:href="@{/gestionclasses}" class="btn btn-outline-secondary btn-lg px-4">
-                        Classes
-                    </a>
-                    <a th:href="@{/gestionmatieres}" class="btn btn-outline-secondary btn-lg px-4">
-                        Matieres
-                    </a>
-                    <a th:href="@{/gestiondevoirs}" class="btn btn-outline-secondary btn-lg px-4">
+                    <a th:href="@{/gestiondevoirs}" class="btn btn-primary btn-lg px-4">
                         Devoirs
                     </a>
                 </div>
@@ -89,147 +80,35 @@
         <h2 class="text-center mb-5">Fonctionnalités principales</h2>
         <div class="row g-4">
             <div class="col-md-4">
-                <a href="/etudiants" class="text-decoration-none">
+                <a href="/gestionetudiants" class="text-decoration-none">
                     <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
                         <i class="mdi mdi-account-group feature-icon"></i>
-                        <h3>Gestion des étudiants</h3>
-                        <p class="text-center">Gérez facilement les informations des étudiants, leurs inscriptions et leur suivi académique.</p>
+                        <h3>Gestion des Etudiants</h3>
+                        <p class="text-center">Gérez facilement les notations des étudiants, leurs inscriptions et leur suivi académique.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
-                <a href="/classes" class="text-decoration-none">
+                <a href="/gestionmatieres" class="text-decoration-none">
                     <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
                         <i class="mdi mdi-school feature-icon"></i>
-                        <h3>Gestion des classes</h3>
-                        <p class="text-center">Organisez vos classes, affectez des enseignants et suivez les emplois du temps.</p>
+                        <h3>Gestion des matières</h3>
+                        <p class="text-center">Gérez votre catalogue de matières, définissez les programmes et attribuez les coefficients pour chaque niveau d'enseignement.</p>
                     </div>
                 </a>
             </div>
             <div class="col-md-4">
-                <a href="/devoirs" class="text-decoration-none">
+                <a href="/gestionclasses" class="text-decoration-none">
                     <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
                         <i class="mdi mdi-file-document feature-icon"></i>
-                        <h3>Gestion des devoirs</h3>
-                        <p class="text-center">Planifiez et suivez les devoirs, examens et évaluations pour chaque classe.</p>
-                    </div>
-                </a>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Statistics Section -->
-<section class="statistics bg-light py-5">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">500+</h2>
-                    <p>Établissements</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">50k+</h2>
-                    <p>Étudiants</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">98%</h2>
-                    <p>Satisfaction</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!--Footer-->
-<footer class="footer py-4 bg-dark text-white">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <h5>GestionScolaire</h5>
-                <p class="mb-0">© 2024 Tous droits réservés</p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <a href="#" class="text-white me-3">Mentions légales</a>
-                <a href="#" class="text-white me-3">Politique de confidentialité</a>
-                <a href="#" class="text-white">CGU</a>
-            </div>
-        </div>
-    </div>
-</footer>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script th:src="@{/js/index.js}"></script>
-</body>
-</html>
-
-<!-- Features Section -->
-<section id="fonctionnalites" class="features py-5">
-    <div class="container">
-        <h2 class="text-center mb-5">Fonctionnalités principales</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <a href="/etudiants" class="text-decoration-none">
-                    <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
-                        <i class="mdi mdi-account-group feature-icon"></i>
-                        <h3>Gestion des étudiants</h3>
-                        <p class="text-center">Gérez facilement les informations des étudiants, leurs inscriptions et leur suivi académique.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="/classes" class="text-decoration-none">
-                    <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
-                        <i class="mdi mdi-school feature-icon"></i>
                         <h3>Gestion des classes</h3>
-                        <p class="text-center">Organisez vos classes, affectez des enseignants et suivez les emplois du temps.</p>
-                    </div>
-                </a>
-            </div>
-            <div class="col-md-4">
-                <a href="/devoirs" class="text-decoration-none">
-                    <div class="feature-card h-100 d-flex flex-column align-items-center cursor-pointer transition-hover">
-                        <i class="mdi mdi-file-document feature-icon"></i>
-                        <h3>Gestion des devoirs</h3>
-                        <p class="text-center">Planifiez et suivez les devoirs, examens et évaluations pour chaque classe.</p>
+                        <p class="text-center">Créez et personnalisez vos classes, gérez les effectifs et suivez la progression pédagogique tout au long de l'année.</p>
                     </div>
                 </a>
             </div>
         </div>
     </div>
 </section>
-
-<!-- Statistics Section -->
-<section class="statistics bg-light py-5">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">500+</h2>
-                    <p>Établissements</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">50k+</h2>
-                    <p>Étudiants</p>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="stat-card">
-                    <h2 class="display-4 fw-bold">98%</h2>
-                    <p>Satisfaction</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
 <!--Footer-->
 <footer class="footer py-4 bg-dark text-white">
     <div class="container">

@@ -31,7 +31,7 @@ public class ClasseController {
         } else {
             model.addAttribute("error", response.getMessage());
         }
-        return "gestionclasses"; // Nom de votre template Thymeleaf
+        return "gestionclasses";
     }
     /**
      * Enregistre ou met à jour une classe

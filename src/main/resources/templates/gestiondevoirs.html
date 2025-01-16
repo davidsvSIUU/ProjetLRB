@@ -119,6 +119,11 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
                                         <a class="dropdown-item" href="#" th:onclick="'modifierDevoir(' + ${devoir.id} + ')'">
+                                            <i class="mdi mdi-pencil text-primary"></i> Noter
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="#" th:onclick="'modifierDevoir(' + ${devoir.id} + ')'">
                                             <i class="mdi mdi-pencil text-primary"></i> Modifier
                                         </a>
                                     </li>
@@ -177,16 +182,6 @@
                     <div class="mb-3">
                         <label class="form-label">Coefficient</label>
                         <input type="number" class="form-control" name="coefficient" step="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nombre de Parties</label>
-                        <input type="number" class="form-control" name="nombreParties" id="nombreParties"  required>
-                    </div>
-                    <div class="mb-3 parts-container" id="pointsParPartieContainer">
-                        <label class="form-label">Points par partie</label>
-                        <div th:each="i : ${#numbers.sequence(1, 1)}">
-                            <input type="number" class="form-control" step="0.01" th:name="'pointsParPartie['+ ${i-1} +']'" required>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
