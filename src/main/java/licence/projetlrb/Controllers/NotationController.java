@@ -72,7 +72,7 @@ public class NotationController {
                     .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
         }
     }
-
+/*
     @GetMapping(
             value = "/creerBulletinDeNoteParEtudiant/{idEtudiant}",
             produces = MediaType.APPLICATION_JSON_VALUE
@@ -150,4 +150,4 @@ public class NotationController {
                     .body(ResponseDTO.error("Une erreur est survenue lors de la recherche des moyennes par matière: " + e.getMessage()));
         }
     }
-}
+*/}

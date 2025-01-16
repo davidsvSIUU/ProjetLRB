@@ -147,7 +147,14 @@ public class EtudiantService {
             return ResponseDTO.error("Erreur lors de la recherche de l'étudiant: " + e.getMessage());
         }
     }
-
+    public ResponseDTO<List<Etudiant>> rechercherEtudiantsParClasse(Integer idClasse) {
+        try {
+            List<Etudiant> etudiants = etudiantRepository.findByIdClasse(idClasse);
+            return ResponseDTO.success(etudiants);
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors de la recherche des étudiants: " + e.getMessage());
+        }
+    }
     @Transactional(readOnly = true)
     public ResponseDTO<List<Etudiant>> rechercherParNomOuPrenom(String terme) {
         try {

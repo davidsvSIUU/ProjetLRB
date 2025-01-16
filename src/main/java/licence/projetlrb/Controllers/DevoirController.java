@@ -1,32 +1,32 @@
 package licence.projetlrb.Controllers;
 
-import licence.projetlrb.Entities.Devoir;
-import licence.projetlrb.Entities.Matiere;
-import licence.projetlrb.Entities.Classe;
-import licence.projetlrb.Entities.Partie_Devoir;
-import licence.projetlrb.Services.DevoirService;
-import licence.projetlrb.Services.MatiereService;
-import licence.projetlrb.Services.ClasseService;
+import licence.projetlrb.Entities.*;
+import licence.projetlrb.Services.*;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Controller
 public class DevoirController {
-
+    @Autowired
+    private EtudiantService etudiantService;
     private final DevoirService devoirService;
     private final ClasseService classeService;
     private final MatiereService matiereService;
-
+    private final NotationService notationService;
     @Autowired
-    public DevoirController(DevoirService devoirService, ClasseService classeService, MatiereService matiereService) {
+    public DevoirController(DevoirService devoirService, ClasseService classeService, MatiereService matiereService, NotationService notationService) {
         this.devoirService = devoirService;
         this.classeService = classeService;
         this.matiereService = matiereService;
+        this.notationService = notationService;
     }
 
 
@@ -130,5 +130,58 @@ public class DevoirController {
         } catch (Exception e) {
             return ResponseDTO.error("la récupération des parties du devoir: " + e.getMessage());
         }
+    }
+    @GetMapping("/devoir/gerernotation/{id}")
+    public String gererNotation(@PathVariable("id") Integer idDevoir, Model model) {
+        try {
+            // Récupérer le devoir
+            ResponseDTO<Devoir> responseDevoir = devoirService.rechercherParId(idDevoir);
+            if (!responseDevoir.isSuccess()) {
+                model.addAttribute("error", responseDevoir.getMessage());
+                return "redirect:/gestiondevoirs";
+            }
+
+            // Récupérer la liste des étudiants de la classe associée au devoir
+            ResponseDTO<List<Etudiant>> responseEtudiants = etudiantService.rechercherEtudiantsParClasse(
+                    responseDevoir.getData().getIdClasse()
+            );
+
+            if (!responseEtudiants.isSuccess()) {
+                model.addAttribute("error", responseEtudiants.getMessage());
+                return "redirect:/gestiondevoirs";
+            }
+
+            // Récupérer les parties du devoir
+            ResponseDTO<List<Partie_Devoir>> responseParties = devoirService.rechercherPartiesParId(idDevoir);
+
+            // Initialiser la Map des notes
+            Map<Integer, BigDecimal> notes = new HashMap<>();
+
+            // Récupérer les notations existantes via le service
+            ResponseDTO<List<Notation>> responseNotations = notationService.rechercherNotationsParDevoir(idDevoir);
+            if (responseNotations.isSuccess() && responseNotations.getData() != null) {
+                for (Notation notation : responseNotations.getData()) {
+                    notes.put(notation.getIdEtudiant(), notation.getNote());
+                }
+            }
+
+            // Ajouter les données au modèle
+            model.addAttribute("devoir", responseDevoir.getData());
+            model.addAttribute("etudiants", responseEtudiants.getData());
+            model.addAttribute("parties", responseParties.getData());
+            model.addAttribute("notes", notes);
+
+            return "gerernotation";
+
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors du chargement de la page: " + e.getMessage());
+            return "redirect:/gestiondevoirs";
+        }
+    }
+
+    @PostMapping("/api/notation/enregistrer")
+    @ResponseBody
+    public ResponseDTO<Notation> enregistrerNotation(@RequestBody Notation notation) {
+        return notationService.enregistrer(notation);
     }
 }

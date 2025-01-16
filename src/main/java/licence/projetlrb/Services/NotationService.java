@@ -3,30 +3,38 @@ package licence.projetlrb.Services;
 import licence.projetlrb.DTO.ResponseDTO;
 import licence.projetlrb.Entities.Notation;
 import licence.projetlrb.Entities.Partie_Devoir;
+import licence.projetlrb.Entities.Devoir;
 import licence.projetlrb.Repositories.NotationRepository;
 import licence.projetlrb.Repositories.PartieDevoirRepository;
+import licence.projetlrb.Repositories.DevoirRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class NotationService {
 
-    @Autowired
-    private NotationRepository notationRepository;
+    private final NotationRepository notationRepository;
+    private final PartieDevoirRepository partieDevoirRepository;
+    private final DevoirRepository devoirRepository;
 
     @Autowired
-    private PartieDevoirRepository partieDevoirRepository;
+    public NotationService(NotationRepository notationRepository,
+                           PartieDevoirRepository partieDevoirRepository,
+                           DevoirRepository devoirRepository) {
+        this.notationRepository = notationRepository;
+        this.partieDevoirRepository = partieDevoirRepository;
+        this.devoirRepository = devoirRepository;
+    }
 
     @Transactional
     public ResponseDTO<Notation> enregistrer(Notation notation) {
         try {
+            // Validation des données
             if (notation.getIdEtudiant() == null) {
                 return ResponseDTO.error("L'ID de l'étudiant est requis");
             }
@@ -36,11 +44,22 @@ public class NotationService {
             if (notation.getNote() == null) {
                 return ResponseDTO.error("La note est requise");
             }
-
-            if(notation.getNote().compareTo(BigDecimal.ZERO) < 0){
-                return ResponseDTO.error("La note ne peut pas être inférieure à 0");
+            if (notation.getNote().compareTo(BigDecimal.ZERO) < 0) {
+                return ResponseDTO.error("La note ne peut pas être négative");
             }
 
+            // Vérification de la partie du devoir
+            Optional<Partie_Devoir> partieDevoir = partieDevoirRepository.findById(notation.getIdPartie());
+            if (partieDevoir.isEmpty()) {
+                return ResponseDTO.error("La partie du devoir spécifiée n'existe pas");
+            }
+
+            // Vérification que la note ne dépasse pas le maximum de points
+            if (notation.getNote().compareTo(partieDevoir.get().getPoints()) > 0) {
+                return ResponseDTO.error("La note ne peut pas dépasser le nombre de points maximum de la partie");
+            }
+
+            // Sauvegarde de la notation
             Notation savedNotation = notationRepository.save(notation);
             return ResponseDTO.success(savedNotation);
         } catch (Exception e) {
@@ -48,186 +67,140 @@ public class NotationService {
         }
     }
 
-
     @Transactional
     public ResponseDTO<Void> supprimer(Integer idNotation) {
         try {
-            Notation notation = notationRepository.findById(idNotation)
-                    .orElseThrow(() -> new RuntimeException("Notation non trouvée avec l'ID: " + idNotation));
-            notationRepository.delete(notation);
+            if (!notationRepository.existsById(idNotation)) {
+                return ResponseDTO.error("Notation non trouvée avec l'ID: " + idNotation);
+            }
+            notationRepository.deleteById(idNotation);
             return ResponseDTO.success(null);
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de la suppression de la notation: " + e.getMessage());
         }
     }
-
     @Transactional(readOnly = true)
-    public ResponseDTO<Map<Integer, Map<String, BigDecimal>>> creerBulletinDeNoteParEtudiant(Integer idEtudiant) {
+    public ResponseDTO<List<Notation>> rechercherNotationsParDevoir(Integer idDevoir) {
         try {
-            if (idEtudiant == null) {
-                return ResponseDTO.error("L'ID de l'étudiant est requis");
-            }
+            List<Notation> notations = new ArrayList<>();
 
-            List<Notation> notations = notationRepository.findByIdEtudiant(idEtudiant);
-            if (notations.isEmpty()) {
-                return ResponseDTO.error("Aucune notation trouvée pour cet étudiant");
-            }
-
-            Map<Integer, Map<String, BigDecimal>> bulletin = new HashMap<>();
-            for (Notation notation : notations) {
-                Partie_Devoir partie = partieDevoirRepository.findById(notation.getIdPartie()).orElse(null);
-                if (partie != null) {
-                    Integer idDevoir = partie.getIdDevoir();
-                    Map<String, BigDecimal> devoirNotes = bulletin.getOrDefault(idDevoir, new HashMap<>());
-                    devoirNotes.put("partie_" + partie.getId(), notation.getNote());
-                    bulletin.put(idDevoir, devoirNotes);
-                }
-            }
-
-
-            return ResponseDTO.success(bulletin);
+            return ResponseDTO.success(notations);
         } catch (Exception e) {
-            return ResponseDTO.error("Erreur lors de la création du bulletin de notes: " + e.getMessage());
+            return ResponseDTO.error("Erreur lors de la recherche des notations: " + e.getMessage());
         }
     }
-
+/*
     @Transactional(readOnly = true)
-    public ResponseDTO<Map<Integer, Map<String, BigDecimal>>> rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant(Integer idEtudiant) {
+    public ResponseDTO<Map<Integer, List<Notation>>> rechercherNotationsParDevoir(Integer idDevoir) {
         try {
-            if (idEtudiant == null) {
-                return ResponseDTO.error("L'ID de l'étudiant est requis");
-            }
-            List<Notation> notations = notationRepository.findByIdEtudiant(idEtudiant);
+            List<Partie_Devoir> parties = partieDevoirRepository.findByIdDevoir(idDevoir);
+            Map<Integer, List<Notation>> notationsParEtudiant = new HashMap<>();
 
-            if (notations.isEmpty()) {
-                return ResponseDTO.error("Aucune notation trouvée pour cet étudiant");
-            }
-            Map<Integer, Map<String, BigDecimal>> result = new HashMap<>();
-
-            for (Notation notation : notations) {
-                Partie_Devoir partie = partieDevoirRepository.findById(notation.getIdPartie()).orElse(null);
-                if (partie != null) {
-                    Integer idDevoir = partie.getIdDevoir();
-                    BigDecimal pointsPartie = partie.getPoints();
-                    BigDecimal note = notation.getNote();
-
-                    BigDecimal notePonderee = note.multiply(pointsPartie).divide(BigDecimal.valueOf(20), 2, RoundingMode.HALF_UP);
-
-                    Map<String, BigDecimal> devoirInfo = result.getOrDefault(idDevoir, new HashMap<>());
-
-                    BigDecimal totalNote = devoirInfo.getOrDefault("totalNote", BigDecimal.ZERO);
-                    BigDecimal totalPoints = devoirInfo.getOrDefault("totalPoints", BigDecimal.ZERO);
-                    totalNote = totalNote.add(notePonderee);
-                    totalPoints = totalPoints.add(pointsPartie);
-                    devoirInfo.put("totalNote", totalNote);
-                    devoirInfo.put("totalPoints", totalPoints);
-
-                    result.put(idDevoir, devoirInfo);
-
-                }
-            }
-            // Calculez la moyenne globale pour chaque devoir
-            for (Map.Entry<Integer, Map<String, BigDecimal>> entry : result.entrySet()) {
-                Map<String, BigDecimal> devoirInfo = entry.getValue();
-                BigDecimal totalNote = devoirInfo.get("totalNote");
-                BigDecimal totalPoints = devoirInfo.get("totalPoints");
-                if(totalPoints.compareTo(BigDecimal.ZERO) > 0){
-                    BigDecimal moyenne = totalNote.divide(totalPoints.divide(BigDecimal.valueOf(20), 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP);
-                    devoirInfo.put("moyenne", moyenne);
-
-                }else{
-                    devoirInfo.put("moyenne", BigDecimal.ZERO);
-                }
-
-
-            }
-
-
-            return ResponseDTO.success(result);
-
-        } catch (Exception e) {
-            return ResponseDTO.error("Erreur lors de la recherche des notes et moyennes par devoir: " + e.getMessage());
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public ResponseDTO<Map<String, BigDecimal>> rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant(Integer idEtudiant) {
-        try {
-            if (idEtudiant == null) {
-                return ResponseDTO.error("L'ID de l'étudiant est requis");
-            }
-            List<Notation> notations = notationRepository.findByIdEtudiant(idEtudiant);
-            if(notations.isEmpty()){
-                return ResponseDTO.error("Aucune notation trouvée pour cet étudiant");
-            }
-
-            Map<String, BigDecimal> matiereAverages = new HashMap<>();
-            Map<String, BigDecimal> matiereTotalPoints = new HashMap<>();
-            Map<String, BigDecimal> matiereTotalNotes = new HashMap<>();
-            for (Notation notation : notations) {
-                Partie_Devoir partie = partieDevoirRepository.findById(notation.getIdPartie()).orElse(null);
-                if (partie != null) {
-                    Integer idDevoir = partie.getIdDevoir();
-                    BigDecimal pointsPartie = partie.getPoints();
-                    BigDecimal note = notation.getNote();
-                    BigDecimal notePonderee = note.multiply(pointsPartie).divide(BigDecimal.valueOf(20), 2, RoundingMode.HALF_UP);
-
-                    // Récupérer la matière du devoir
-                    DevoirService devoirService = new DevoirService();
-
-                    ResponseDTO<licence.projetlrb.Entities.Devoir> devoirResponse = devoirService.rechercherParId(idDevoir);
-
-                    if(devoirResponse.isSuccess()){
-                        licence.projetlrb.Entities.Devoir devoir = devoirResponse.getData();
-                        if (devoir != null) {
-                            String matiereName = devoir.getIdMatiere().toString();
-
-                            // Initialisation si la matière n'est pas encore dans le map
-                            matiereTotalPoints.putIfAbsent(matiereName, BigDecimal.ZERO);
-                            matiereTotalNotes.putIfAbsent(matiereName, BigDecimal.ZERO);
-
-                            // Mettre à jour les totaux
-                            matiereTotalPoints.put(matiereName, matiereTotalPoints.get(matiereName).add(pointsPartie));
-                            matiereTotalNotes.put(matiereName, matiereTotalNotes.get(matiereName).add(notePonderee));
-                        }
-
-                    } else{
-                        return ResponseDTO.error("erreur lors de la récupération du devoir");
+            for (Partie_Devoir partie : parties) {
+                List<Notation> notations = notationRepository.findByIdPartie(partie.getId());
+                for (Notation notation : notations) {
+                    if (!notationsParEtudiant.containsKey(notation.getIdEtudiant())) {
+                        notationsParEtudiant.put(notation.getIdEtudiant(), new ArrayList<>());
                     }
-
-
+                    notationsParEtudiant.get(notation.getIdEtudiant()).add(notation);
                 }
-
-            }
-            BigDecimal totalAllPoints = BigDecimal.ZERO;
-            BigDecimal totalAllNotes = BigDecimal.ZERO;
-            for (Map.Entry<String, BigDecimal> entry : matiereTotalPoints.entrySet()) {
-                String matiereName = entry.getKey();
-                BigDecimal totalPoints = entry.getValue();
-                BigDecimal totalNotes = matiereTotalNotes.get(matiereName);
-
-                if(totalPoints.compareTo(BigDecimal.ZERO) > 0){
-                    BigDecimal moyenne = totalNotes.divide(totalPoints.divide(BigDecimal.valueOf(20), 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP);
-                    matiereAverages.put(matiereName, moyenne);
-                }else{
-                    matiereAverages.put(matiereName, BigDecimal.ZERO);
-                }
-
-                totalAllNotes = totalAllNotes.add(totalNotes);
-                totalAllPoints = totalAllPoints.add(totalPoints);
-
-
             }
 
-            if(totalAllPoints.compareTo(BigDecimal.ZERO) > 0){
-                BigDecimal moyenneGenerale = totalAllNotes.divide(totalAllPoints.divide(BigDecimal.valueOf(20), 2, RoundingMode.HALF_UP), 2, RoundingMode.HALF_UP);
-                matiereAverages.put("moyenneGenerale", moyenneGenerale);
-            }else{
-                matiereAverages.put("moyenneGenerale", BigDecimal.ZERO);
-            }
-            return ResponseDTO.success(matiereAverages);
+            return ResponseDTO.success(notationsParEtudiant);
         } catch (Exception e) {
-            return ResponseDTO.error("Erreur lors de la recherche des moyennes par matière: " + e.getMessage());
+            return ResponseDTO.error("Erreur lors de la recherche des notations: " + e.getMessage());
         }
     }
+
+    @Transactional(readOnly = true)
+    public ResponseDTO<Map<Integer, BigDecimal>> calculerMoyennesParDevoir(Integer idDevoir) {
+        try {
+            List<Partie_Devoir> parties = partieDevoirRepository.findByIdDevoir(idDevoir);
+            Map<Integer, BigDecimal> moyennes = new HashMap<>();
+
+            ResponseDTO<Map<Integer, List<Notation>>> notationsResponse = rechercherNotationsParDevoir(idDevoir);
+            if (!notationsResponse.isSuccess()) {
+                return ResponseDTO.error(notationsResponse.getMessage());
+            }
+
+            Map<Integer, List<Notation>> notationsParEtudiant = notationsResponse.getData();
+
+            for (Map.Entry<Integer, List<Notation>> entry : notationsParEtudiant.entrySet()) {
+                BigDecimal totalPoints = BigDecimal.ZERO;
+                BigDecimal totalMaxPoints = BigDecimal.ZERO;
+
+                for (Notation notation : entry.getValue()) {
+                    Optional<Partie_Devoir> partie = partieDevoirRepository.findById(notation.getIdPartie());
+                    if (partie.isPresent()) {
+                        totalPoints = totalPoints.add(notation.getNote());
+                        totalMaxPoints = totalMaxPoints.add(partie.get().getPoints());
+                    }
+                }
+
+                if (totalMaxPoints.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal moyenne = totalPoints.multiply(BigDecimal.valueOf(20))
+                            .divide(totalMaxPoints, 2, RoundingMode.HALF_UP);
+                    moyennes.put(entry.getKey(), moyenne);
+                }
+            }
+
+            return ResponseDTO.success(moyennes);
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors du calcul des moyennes: " + e.getMessage());
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseDTO<Map<String, BigDecimal>> calculerMoyenneParMatiere(Integer idEtudiant) {
+        try {
+            List<Notation> notations = notationRepository.findByIdEtudiant(idEtudiant);
+            Map<String, BigDecimal> moyennesParMatiere = new HashMap<>();
+            Map<String, BigDecimal> totalPointsParMatiere = new HashMap<>();
+            Map<String, BigDecimal> maxPointsParMatiere = new HashMap<>();
+
+            for (Notation notation : notations) {
+                Optional<Partie_Devoir> partieOpt = partieDevoirRepository.findById(notation.getIdPartie());
+                if (partieOpt.isPresent()) {
+                    Partie_Devoir partie = partieOpt.get();
+                    Optional<Devoir> devoirOpt = devoirRepository.findById(partie.getIdDevoir());
+
+                    if (devoirOpt.isPresent()) {
+                        String matiere = devoirOpt.get().getIdMatiere().toString();
+
+                        totalPointsParMatiere.merge(matiere, notation.getNote(), BigDecimal::add);
+                        maxPointsParMatiere.merge(matiere, partie.getPoints(), BigDecimal::add);
+                    }
+                }
+            }
+
+            // Calcul des moyennes par matière
+            for (Map.Entry<String, BigDecimal> entry : totalPointsParMatiere.entrySet()) {
+                String matiere = entry.getKey();
+                BigDecimal totalPoints = entry.getValue();
+                BigDecimal maxPoints = maxPointsParMatiere.get(matiere);
+
+                if (maxPoints.compareTo(BigDecimal.ZERO) > 0) {
+                    BigDecimal moyenne = totalPoints.multiply(BigDecimal.valueOf(20))
+                            .divide(maxPoints, 2, RoundingMode.HALF_UP);
+                    moyennesParMatiere.put(matiere, moyenne);
+                }
+            }
+
+            // Calcul de la moyenne générale
+            BigDecimal totalPoints = totalPointsParMatiere.values().stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal totalMaxPoints = maxPointsParMatiere.values().stream()
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            if (totalMaxPoints.compareTo(BigDecimal.ZERO) > 0) {
+                BigDecimal moyenneGenerale = totalPoints.multiply(BigDecimal.valueOf(20))
+                        .divide(totalMaxPoints, 2, RoundingMode.HALF_UP);
+                moyennesParMatiere.put("moyenneGenerale", moyenneGenerale);
+            }
+
+            return ResponseDTO.success(moyennesParMatiere);
+        } catch (Exception e) {
+            return ResponseDTO.error("Erreur lors du calcul des moyennes par matière: " + e.getMessage());
+        }
+    }*/
 }

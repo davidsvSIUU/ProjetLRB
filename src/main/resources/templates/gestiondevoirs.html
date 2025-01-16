@@ -118,8 +118,8 @@
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li>
-                                        <a class="dropdown-item" href="#" th:onclick="'modifierDevoir(' + ${devoir.id} + ')'">
-                                            <i class="mdi mdi-pencil text-primary"></i> Noter
+                                        <a class="dropdown-item" th:href="@{/devoir/gerernotation/{id}(id=${devoir.id})}">
+                                            <i class="mdi mdi-pencil-box-multiple text-primary"></i> Notation
                                         </a>
                                     </li>
                                     <li>
