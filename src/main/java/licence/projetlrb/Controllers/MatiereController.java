@@ -4,118 +4,98 @@ import licence.projetlrb.Entities.Matiere;
 import licence.projetlrb.Services.MatiereService;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/matiere")
-@CrossOrigin(origins = "*")
+@Controller
 public class MatiereController {
 
-    @Autowired
-    private MatiereService matiereService;
+    private final MatiereService matiereService;
 
-    @PostMapping(
-            value = "/enregistrer",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Matiere>> enregistrer(@RequestBody Matiere matiere) {
+    @Autowired
+    public MatiereController(MatiereService matiereService) {
+        this.matiereService = matiereService;
+    }
+
+    /**
+     * Affiche la page de gestion des matières
+     */
+    @GetMapping("/gestionmatieres")
+    public String gestionMatieres(Model model) {
+        ResponseDTO<List<Matiere>> response = matiereService.rechercherMatieres();
+        if (response.isSuccess()) {
+            model.addAttribute("matieres", response.getData());
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        return "gestionmatieres"; // Nom de votre template Thymeleaf
+    }
+    /**
+     * Enregistre ou met à jour une matière
+     */
+    @PostMapping("/matiere/enregistrer")
+    public String enregistrer(@ModelAttribute Matiere matiere, Model model) {
         try {
             ResponseDTO<Matiere> response = matiereService.enregistrer(matiere);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Matière enregistrée avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de l'enregistrement: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de l'enregistrement: " + e.getMessage());
         }
+        return "redirect:/gestionmatieres";
     }
 
-    @DeleteMapping(
-            value = "/supprimer/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Void>> supprimer(@PathVariable("id") Integer id) {
+    /**
+     * Supprime une matière
+     */
+    @PostMapping("/matiere/supprimer/{id}")
+    public String supprimer(@PathVariable("id") Integer id, Model model) {
         try {
             ResponseDTO<Void> response = matiereService.supprimer(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Matière supprimée avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        }  catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de la suppression: " + e.getMessage());
         }
+        return "redirect:/gestionmatieres";
     }
 
-    @GetMapping(
-            value = "/rechercheMatiere",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<List<Matiere>>> rechercherMatieres() {
-        try {
-            ResponseDTO<List<Matiere>> response = matiereService.rechercherMatieres();
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
-        }
-    }
-    @GetMapping(
-            value = "/rechercher/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Matiere>> rechercherParId(@PathVariable("id") Integer id) {
+    /**
+     * Affiche le formulaire de modification d'une matière
+     */
+    @GetMapping("/matiere/modifier/{id}")
+    public String afficherModification(@PathVariable("id") Integer id, Model model) {
         try {
             ResponseDTO<Matiere> response = matiereService.rechercherParId(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("matiere", response.getData());
+            } else {
+                model.addAttribute("error", response.getMessage());
+                return "redirect:/gestionmatieres";
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de la recherche: " + e.getMessage());
+            return "redirect:/gestionmatieres";
+        }
+
+        return "gestionmatieres";
+    }
+    @GetMapping("/matiere/{id}")
+    @ResponseBody
+    public ResponseDTO<Matiere> getMatiere(@PathVariable Integer id) {
+        try {
+            return matiereService.rechercherParId(id);
+        } catch (Exception e) {
+            return ResponseDTO.error("la récupération de la matière: " + e.getMessage());
         }
     }
 }

@@ -1,121 +1,134 @@
 package licence.projetlrb.Controllers;
 
 import licence.projetlrb.Entities.Devoir;
+import licence.projetlrb.Entities.Matiere;
+import licence.projetlrb.Entities.Classe;
+import licence.projetlrb.Entities.Partie_Devoir;
 import licence.projetlrb.Services.DevoirService;
+import licence.projetlrb.Services.MatiereService;
+import licence.projetlrb.Services.ClasseService;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/devoir")
-@CrossOrigin(origins = "*")
+@Controller
 public class DevoirController {
 
-    @Autowired
-    private DevoirService devoirService;
+    private final DevoirService devoirService;
+    private final ClasseService classeService;
+    private final MatiereService matiereService;
 
-    @PostMapping(
-            value = "/enregistrer",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Devoir>> enregistrer(@RequestBody Devoir devoir) {
-        try {
-            ResponseDTO<Devoir> response = devoirService.enregistrer(devoir);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de l'enregistrement: " + e.getMessage()));
-        }
+    @Autowired
+    public DevoirController(DevoirService devoirService, ClasseService classeService, MatiereService matiereService) {
+        this.devoirService = devoirService;
+        this.classeService = classeService;
+        this.matiereService = matiereService;
     }
 
-    @DeleteMapping(
-            value = "/supprimer/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Void>> supprimer(@PathVariable("id") Integer id) {
+
+    /**
+     * Affiche la page de gestion des devoirs
+     */
+    @GetMapping("/gestiondevoirs")
+    public String gestionDevoirs(Model model) {
+        ResponseDTO<List<Devoir>> response = devoirService.rechercherDevoirs();
+        ResponseDTO<List<Classe>> responseClasse = classeService.rechercherClasses();
+        ResponseDTO<List<Matiere>> responseMatiere = matiereService.rechercherMatieres();
+        if (response.isSuccess() && responseClasse.isSuccess() && responseMatiere.isSuccess()) {
+            model.addAttribute("devoirs", response.getData());
+            model.addAttribute("classes", responseClasse.getData());
+            model.addAttribute("matieres", responseMatiere.getData());
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        return "gestiondevoirs";
+    }
+
+    /**
+     * Enregistre ou met à jour un devoir
+     */
+    @PostMapping("/devoir/enregistrer")
+    public String enregistrer(@ModelAttribute Devoir devoir,
+                              @RequestParam(value = "pointsParPartie", required = false) List<String> pointsParPartie,
+                              Model model) {
+        try {
+            ResponseDTO<Devoir> response = devoirService.enregistrer(devoir, pointsParPartie);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Devoir enregistré avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de l'enregistrement: " + e.getMessage());
+        }
+        return "redirect:/gestiondevoirs";
+    }
+
+
+    /**
+     * Supprime un devoir
+     */
+    @PostMapping("/devoir/supprimer/{id}")
+    public String supprimer(@PathVariable("id") Integer id, Model model) {
         try {
             ResponseDTO<Void> response = devoirService.supprimer(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Devoir supprimé avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de la suppression: " + e.getMessage());
+        }
+        return "redirect:/gestiondevoirs";
+    }
+
+    /**
+     * Affiche le formulaire de modification d'un devoir
+     */
+    @GetMapping("/devoir/modifier/{id}")
+    public String afficherModification(@PathVariable("id") Integer id, Model model) {
+        try {
+            ResponseDTO<Devoir> response = devoirService.rechercherParId(id);
+            ResponseDTO<List<Classe>> responseClasse = classeService.rechercherClasses();
+            ResponseDTO<List<Matiere>> responseMatiere = matiereService.rechercherMatieres();
+            if (response.isSuccess() && responseClasse.isSuccess() && responseMatiere.isSuccess()) {
+                model.addAttribute("devoir", response.getData());
+                model.addAttribute("classes", responseClasse.getData());
+                model.addAttribute("matieres", responseMatiere.getData());
+            } else {
+                model.addAttribute("error", response.getMessage());
+                return "redirect:/gestiondevoirs";
+            }
+        } catch (Exception e) {
+            model.addAttribute("error", "Erreur lors de la recherche: " + e.getMessage());
+            return "redirect:/gestiondevoirs";
+        }
+
+        return "gestiondevoirs";
+    }
+
+    @GetMapping("/devoir/{id}")
+    @ResponseBody
+    public ResponseDTO<Devoir> getDevoir(@PathVariable Integer id) {
+        try {
+            return devoirService.rechercherParId(id);
+        } catch (Exception e) {
+            return ResponseDTO.error("la récupération du devoir: " + e.getMessage());
         }
     }
 
-    @GetMapping(
-            value = "/rechercherDevoirs",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<List<Devoir>>> rechercherDevoirs() {
+    @GetMapping("/devoir/partie/{id}")
+    @ResponseBody
+    public ResponseDTO<List<Partie_Devoir>> getPartieDevoir(@PathVariable Integer id) {
         try {
-            ResponseDTO<List<Devoir>> response = devoirService.rechercherDevoirs();
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
+            return devoirService.rechercherPartiesParId(id);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
-        }
-    }
-    @GetMapping(
-            value = "/rechercher/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Devoir>> rechercherParId(@PathVariable("id") Integer id) {
-        try {
-            ResponseDTO<Devoir> response = devoirService.rechercherParId(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
+            return ResponseDTO.error("la récupération des parties du devoir: " + e.getMessage());
         }
     }
 }

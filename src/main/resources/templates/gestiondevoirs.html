@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Devoirs</title>
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.5.95/css/materialdesignicons.min.css" rel="stylesheet">
+    <style>
+        .table-container {
+            margin-top: 80px;
+            padding: 20px;
+        }
+        .btn-actions {
+            min-width: 130px;
+        }
+        .dropdown-toggle::after {
+            margin-left: 8px;
+        }
+        .search-container {
+            max-width: 300px;
+        }
+        .table th {
+            background-color: #f8f9fa;
+        }
+        .modal-header {
+            background-color: #f8f9fa;
+        }
+        .parts-container {
+            margin-bottom : 10px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-light fixed-top bg-light shadow-sm">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <img th:src="@{/img/logo.png}" alt="Logo" height="40">
+            GestionScolaire
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ajouterDevoirModal">
+                        <i class="mdi mdi-plus"></i> Ajouter un devoir
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Messages de notification -->
+<div class="container mt-5 pt-3">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="mdi mdi-alert-circle"></i>
+        <span th:text="${error}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="mdi mdi-check-circle"></i>
+        <span th:text="${success}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+</div>
+
+<!-- Table des devoirs -->
+<div class="container table-container">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Liste des Devoirs</h4>
+                <div class="search-container">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
+                        <input type="text" class="form-control" placeholder="Rechercher un devoir..."
+                               id="searchInput" th:value="${searchTerm}">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                    <tr>
+                        <th>Classe</th>
+                        <th>Matière</th>
+                        <th>Type</th>
+                        <th>Date</th>
+                        <th>Coefficient</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(devoirs)}">
+                        <td colspan="6" class="text-center py-4">
+                            <i class="mdi mdi-information text-info" style="font-size: 24px;"></i>
+                            <p class="mb-0">Aucun devoir trouvé</p>
+                        </td>
+                    </tr>
+                    <tr th:each="devoir : ${devoirs}">
+                        <td th:text="${devoir.idClasse}"></td>
+                        <td th:text="${devoir.idMatiere}"></td>
+                        <td th:text="${devoir.type}"></td>
+                        <td th:text="${devoir.dateDevoir}"></td>
+                        <td th:text="${devoir.coefficient}"></td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle btn-actions" type="button" data-bs-toggle="dropdown">
+                                    <i class="mdi mdi-cog"></i> Gérer
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="#" th:onclick="'modifierDevoir(' + ${devoir.id} + ')'">
+                                            <i class="mdi mdi-pencil text-primary"></i> Modifier
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <form th:action="@{/devoir/supprimer/{id}(id=${devoir.id})}"
+                                              method="post" style="display: inline;"
+                                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce devoir ?');">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="mdi mdi-delete"></i> Supprimer
+                                            </button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajouter Devoir -->
+<div class="modal fade" id="ajouterDevoirModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ajouter un devoir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/devoir/enregistrer}" method="post">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Classe</label>
+                        <select class="form-select" name="idClasse" required>
+                            <option value="">Sélectionner une classe</option>
+                            <option th:each="classe : ${classes}" th:value="${classe.id}" th:text="${classe.denomination}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Matière</label>
+                        <select class="form-select" name="idMatiere" required>
+                            <option value="">Sélectionner une matière</option>
+                            <option th:each="matiere : ${matieres}" th:value="${matiere.id}" th:text="${matiere.denomination}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <input type="text" class="form-control" name="type" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" name="dateDevoir" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Coefficient</label>
+                        <input type="number" class="form-control" name="coefficient" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Parties</label>
+                        <input type="number" class="form-control" name="nombreParties" id="nombreParties"  required>
+                    </div>
+                    <div class="mb-3 parts-container" id="pointsParPartieContainer">
+                        <label class="form-label">Points par partie</label>
+                        <div th:each="i : ${#numbers.sequence(1, 1)}">
+                            <input type="number" class="form-control" step="0.01" th:name="'pointsParPartie['+ ${i-1} +']'" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Modifier Devoir -->
+<div class="modal fade" id="modifierDevoirModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modifier le devoir</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form th:action="@{/devoir/enregistrer}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" id="modif-id" name="id">
+                    <div class="mb-3">
+                        <label class="form-label">Classe</label>
+                        <select class="form-select" id="modif-idClasse" name="idClasse" required>
+                            <option value="">Sélectionner une classe</option>
+                            <option th:each="classe : ${classes}" th:value="${classe.id}" th:text="${classe.denomination}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Matière</label>
+                        <select class="form-select" id="modif-idMatiere" name="idMatiere" required>
+                            <option value="">Sélectionner une matière</option>
+                            <option th:each="matiere : ${matieres}" th:value="${matiere.id}" th:text="${matiere.denomination}"></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Type</label>
+                        <input type="text" class="form-control" id="modif-type" name="type" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" id="modif-dateDevoir" name="dateDevoir" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Coefficient</label>
+                        <input type="number" class="form-control" id="modif-coefficient" name="coefficient" step="0.01" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de Parties</label>
+                        <input type="number" class="form-control" name="nombreParties" id="modif-nombreParties" required>
+                    </div>
+                    <div class="mb-3 parts-container" id="pointsParPartieContainerModif">
+                        <label class="form-label">Points par partie</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Sauvegarder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function modifierDevoir(id) {
+        fetch(`/devoir/${id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.success && data.data) {
+                    const devoir = data.data;
+                    document.getElementById('modif-id').value = devoir.id || '';
+                    document.getElementById('modif-idClasse').value = devoir.idClasse || '';
+                    document.getElementById('modif-idMatiere').value = devoir.idMatiere || '';
+                    document.getElementById('modif-type').value = devoir.type || '';
+                    document.getElementById('modif-dateDevoir').value = devoir.dateDevoir || '';
+                    document.getElementById('modif-coefficient').value = devoir.coefficient || '';
+                    document.getElementById('modif-nombreParties').value = devoir.nombreParties || '';
+                    const container = document.getElementById('pointsParPartieContainerModif')
+                    container.innerHTML = '<label class="form-label">Points par partie</label>'
+                    fetch(`/devoir/partie/${id}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data && data.success && data.data) {
+                                const parties = data.data;
+                                for (let i = 0; i < parties.length; i++) {
+                                    container.innerHTML += `
+                                        <input type="number" class="form-control" step="0.01" value="${parties[i].points}" name="pointsParPartie[${i}]" required>
+                                    `
+                                }
+                            }
+                            else {
+                                alert(data.message || "erreur lors de la recuperation des points par partie")
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Erreur:', error);
+                            alert('Une erreur est survenue lors de la récupération des données');
+                        });
+
+                    const modal = new bootstrap.Modal(document.getElementById('modifierDevoirModal'));
+                    modal.show();
+                } else {
+                    alert(data.message || 'Erreur lors de la récupération des données du devoir');
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Une erreur est survenue lors de la récupération des données');
+            });
+    }
+
+    document.getElementById('nombreParties').addEventListener('input', function(e) {
+        const nombreParties = e.target.value;
+        const container = document.getElementById('pointsParPartieContainer')
+        container.innerHTML = '<label class="form-label">Points par partie</label>'
+        for (let i = 0; i < nombreParties; i++) {
+            container.innerHTML += `<input type="number" class="form-control" step="0.01" name="pointsParPartie[${i}]" required>`
+        }
+    });
+
+    document.getElementById('searchInput')?.addEventListener('input', function(e) {
+        const searchTerm = e.target.value;
+        if (searchTerm.length >= 2) {
+            // Utilisez la même API de recherche si nécessaire, sinon adaptez-la ou commentez cette partie
+            //  fetch(`/classe/rechercher?terme=${encodeURIComponent(searchTerm)}`)
+            //    .then(response => response.json())
+            //    .then(data => {
+            //        if (data.success) {
+            //            // Mettre à jour le tableau
+            //            // Cette partie nécessite une implémentation côté serveur
+            //        }
+            //    })
+            //    .catch(error => console.error('Erreur:', error));
+        }
+    });
+</script>
+
+</body>
+</html>

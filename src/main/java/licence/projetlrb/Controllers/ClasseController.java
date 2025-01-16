@@ -4,119 +4,98 @@ import licence.projetlrb.Entities.Classe;
 import licence.projetlrb.Services.ClasseService;
 import licence.projetlrb.DTO.ResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/classe")
-@CrossOrigin(origins = "*")
+@Controller
 public class ClasseController {
 
-    @Autowired
-    private ClasseService classeService;
+    private final ClasseService classeService;
 
-    @PostMapping(
-            value = "/enregistrer",
-            consumes = MediaType.APPLICATION_JSON_VALUE,
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Classe>> enregistrer(@RequestBody Classe classe) {
+    @Autowired
+    public ClasseController(ClasseService classeService) {
+        this.classeService = classeService;
+    }
+
+    /**
+     * Affiche la page de gestion des classes
+     */
+    @GetMapping("/gestionclasses")
+    public String gestionClasses(Model model) {
+        ResponseDTO<List<Classe>> response = classeService.rechercherClasses();
+        if (response.isSuccess()) {
+            model.addAttribute("classes", response.getData());
+        } else {
+            model.addAttribute("error", response.getMessage());
+        }
+        return "gestionclasses"; // Nom de votre template Thymeleaf
+    }
+    /**
+     * Enregistre ou met à jour une classe
+     */
+    @PostMapping("/classe/enregistrer")
+    public String enregistrer(@ModelAttribute Classe classe, Model model) {
         try {
             ResponseDTO<Classe> response = classeService.enregistrer(classe);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Classe enregistrée avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de l'enregistrement: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de l'enregistrement: " + e.getMessage());
         }
+        return "redirect:/gestionclasses";
     }
 
-    @DeleteMapping(
-            value = "/supprimer/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Void>> supprimer(@PathVariable("id") Integer id) {
+    /**
+     * Supprime une classe
+     */
+    @PostMapping("/classe/supprimer/{id}")
+    public String supprimer(@PathVariable("id") Integer id, Model model) {
         try {
             ResponseDTO<Void> response = classeService.supprimer(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("success", "Classe supprimée avec succès");
+            } else {
+                model.addAttribute("error", response.getMessage());
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la suppression: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de la suppression: " + e.getMessage());
         }
+        return "redirect:/gestionclasses";
     }
 
-    @GetMapping(
-            value = "/rechercherClasses",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<List<Classe>>> rechercherClasses() {
-        try {
-            ResponseDTO<List<Classe>> response = classeService.rechercherClasses();
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
-            }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping(
-            value = "/rechercher/{id}",
-            produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public ResponseEntity<ResponseDTO<Classe>> rechercherParId(@PathVariable("id") Integer id) {
+    /**
+     * Affiche le formulaire de modification d'une classe
+     */
+    @GetMapping("/classe/modifier/{id}")
+    public String afficherModification(@PathVariable("id") Integer id, Model model) {
         try {
             ResponseDTO<Classe> response = classeService.rechercherParId(id);
-            if (!response.isSuccess()) {
-                return ResponseEntity.badRequest()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(response);
+            if (response.isSuccess()) {
+                model.addAttribute("classe", response.getData());
+            } else {
+                model.addAttribute("error", response.getMessage());
+                return "redirect:/gestionclasses";
             }
-            return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(response);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error(e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(ResponseDTO.error("Une erreur est survenue lors de la recherche: " + e.getMessage()));
+            model.addAttribute("error", "Erreur lors de la recherche: " + e.getMessage());
+            return "redirect:/gestionclasses";
+        }
+
+        return "gestionclasses";
+    }
+    @GetMapping("/classe/{id}")
+    @ResponseBody
+    public ResponseDTO<Classe> getClasse(@PathVariable Integer id) {
+        try {
+            return classeService.rechercherParId(id);
+        } catch (Exception e) {
+            return ResponseDTO.error("la récupération de la classe: " + e.getMessage());
         }
     }
 }
