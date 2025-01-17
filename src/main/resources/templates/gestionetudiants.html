@@ -143,6 +143,11 @@
                                         </a>
                                     </li>
                                     <li>
+                                        <a class="dropdown-item" th:href="@{/gestionnotations(etudiantId=${etudiant.id})}">
+                                            <i class="mdi mdi-eye text-info"></i> Voir les notes
+                                        </a>
+                                    </li>
+                                    <li>
                                         <form th:action="@{/etudiant/supprimer/{id}(id=${etudiant.id})}"
                                               method="post" style="display: inline;"
                                               onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet étudiant ?');">

@@ -12,6 +12,7 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Controller
 public class DevoirController {
@@ -47,6 +48,107 @@ public class DevoirController {
         }
         return "gestiondevoirs";
     }
+
+    @GetMapping("/gestionnotations")
+    public String gestionNotations(@RequestParam(name = "etudiantId", required = false) Integer etudiantId,Model model) {
+        ResponseDTO<List<Devoir>> responseDevoirs = devoirService.rechercherDevoirs();
+        if (!responseDevoirs.isSuccess()) {
+            model.addAttribute("error", responseDevoirs.getMessage());
+            return "gestionnotations";
+        }
+        List<Devoir> devoirs = responseDevoirs.getData();
+        if (devoirs.isEmpty()){
+            model.addAttribute("devoirs", devoirs);
+            return "gestionnotations";
+        }
+        ResponseDTO<List<Etudiant>> responseEtudiants = etudiantService.rechercherEtudiantsParClasse(devoirs.get(0).getIdClasse());
+        if (!responseEtudiants.isSuccess()) {
+            model.addAttribute("error", responseEtudiants.getMessage());
+            return "gestionnotations";
+        }
+        List<Etudiant> etudiants = responseEtudiants.getData();
+
+        Map<String, BigDecimal> notes = new HashMap<>();
+        Map<String, Map<String, Object>> noteGlobalEtMoyenneGlobalParEtudiantParDevoir = new HashMap<>();
+        Map<Integer, Map<String,Object>> bulletinParEtudiant = new HashMap<>();
+        Map<Integer, List<Map<String, Object>>> moyenneParMatiereParEtudiant = new HashMap<>();
+        if (etudiantId != null) {
+            // Filtrer les étudiants si un ID d'étudiant est fourni
+            etudiants = etudiants.stream()
+                    .filter(etudiant -> Objects.equals(etudiant.getId(), etudiantId))
+                    .toList();
+            if (!etudiants.isEmpty()) {
+                for (Devoir devoir : devoirs) {
+                    ResponseDTO<List<Notation>> responseNotations = notationService.rechercherNotationsParDevoir(devoir.getId());
+                    if (responseNotations.isSuccess() && responseNotations.getData() != null) {
+                        for (Notation notation : responseNotations.getData()) {
+                            if (Objects.equals(notation.getIdEtudiant(), etudiantId)){
+                                notes.put(notation.getIdEtudiant() + "_" + devoir.getId(), notation.getNote());
+                            }
+                        }
+                    }
+                }
+
+                ResponseDTO<Map<String, Object>> responseBulletin =  notationService.creerBulletinDeNoteParEtudiant(etudiantId);
+                if(responseBulletin.isSuccess()) {
+                    bulletinParEtudiant.put(etudiantId, responseBulletin.getData());
+                }
+                ResponseDTO<List<Map<String, Object>>> responseMatiere = notationService.rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant(etudiantId);
+                if (responseMatiere.isSuccess()){
+                    moyenneParMatiereParEtudiant.put(etudiantId,responseMatiere.getData());
+                }
+                for (Devoir devoir : devoirs){
+                    ResponseDTO<Map<String, Object>> responseNote =  notationService.rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant(etudiantId, devoir.getId());
+                    if (responseNote.isSuccess()){
+                        noteGlobalEtMoyenneGlobalParEtudiantParDevoir.put(etudiantId + "_" + devoir.getId(), responseNote.getData());
+                    }
+                }
+            }
+        }
+        else {
+            for (Devoir devoir : devoirs) {
+                ResponseDTO<List<Notation>> responseNotations = notationService.rechercherNotationsParDevoir(devoir.getId());
+                if(responseNotations.isSuccess() && responseNotations.getData() != null) {
+                    for (Notation notation : responseNotations.getData()) {
+                        notes.put(notation.getIdEtudiant() + "_" + devoir.getId(), notation.getNote());
+                    }
+                }
+            }
+
+            for (Etudiant etudiant : etudiants){
+                ResponseDTO<Map<String, Object>> responseBulletin =  notationService.creerBulletinDeNoteParEtudiant(etudiant.getId());
+                if(responseBulletin.isSuccess()) {
+                    bulletinParEtudiant.put(etudiant.getId(), responseBulletin.getData());
+                }
+            }
+            for (Etudiant etudiant : etudiants){
+                ResponseDTO<List<Map<String, Object>>> responseMatiere = notationService.rechercherMoyenneEtMoyenneGlobalParMatiereParEtudiant(etudiant.getId());
+                if (responseMatiere.isSuccess()){
+                    moyenneParMatiereParEtudiant.put(etudiant.getId(),responseMatiere.getData());
+                }
+            }
+            for (Etudiant etudiant : etudiants){
+                for (Devoir devoir : devoirs){
+                    ResponseDTO<Map<String, Object>> responseNote =  notationService.rechercherNoteGlobalEtMoyenneGlobaleParDevoirParEtudiant(etudiant.getId(), devoir.getId());
+                    if (responseNote.isSuccess()){
+                        noteGlobalEtMoyenneGlobalParEtudiantParDevoir.put(etudiant.getId() + "_" + devoir.getId(), responseNote.getData());
+                    }
+                }
+            }
+
+        }
+
+        model.addAttribute("devoirs", devoirs);
+        model.addAttribute("etudiants", etudiants);
+        model.addAttribute("notes", notes);
+        model.addAttribute("bulletinParEtudiant", bulletinParEtudiant);
+        model.addAttribute("moyenneParMatiereParEtudiant", moyenneParMatiereParEtudiant);
+        model.addAttribute("noteGlobalEtMoyenneGlobalParEtudiantParDevoir", noteGlobalEtMoyenneGlobalParEtudiantParDevoir);
+
+
+        return "gestionnotations";
+    }
+
 
     /**
      * Enregistre ou met à jour un devoir
@@ -178,11 +280,9 @@ public class DevoirController {
             return "redirect:/gestiondevoirs";
         }
     }
-
     @PostMapping("/api/notation/enregistrer")
     @ResponseBody
     public ResponseDTO<Notation> enregistrerNotation(@RequestBody Map<String, Object> notationData) {
         return notationService.enregistrer(notationData);
     }
-
 }

@@ -183,6 +183,7 @@
                         <label class="form-label">Coefficient</label>
                         <input type="number" class="form-control" name="coefficient" step="0.01" required>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -230,13 +231,7 @@
                         <label class="form-label">Coefficient</label>
                         <input type="number" class="form-control" id="modif-coefficient" name="coefficient" step="0.01" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Nombre de Parties</label>
-                        <input type="number" class="form-control" name="nombreParties" id="modif-nombreParties" required>
-                    </div>
-                    <div class="mb-3 parts-container" id="pointsParPartieContainerModif">
-                        <label class="form-label">Points par partie</label>
-                    </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -262,28 +257,6 @@
                     document.getElementById('modif-type').value = devoir.type || '';
                     document.getElementById('modif-dateDevoir').value = devoir.dateDevoir || '';
                     document.getElementById('modif-coefficient').value = devoir.coefficient || '';
-                    document.getElementById('modif-nombreParties').value = devoir.nombreParties || '';
-                    const container = document.getElementById('pointsParPartieContainerModif')
-                    container.innerHTML = '<label class="form-label">Points par partie</label>'
-                    fetch(`/devoir/partie/${id}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data && data.success && data.data) {
-                                const parties = data.data;
-                                for (let i = 0; i < parties.length; i++) {
-                                    container.innerHTML += `
-                                        <input type="number" class="form-control" step="0.01" value="${parties[i].points}" name="pointsParPartie[${i}]" required>
-                                    `
-                                }
-                            }
-                            else {
-                                alert(data.message || "erreur lors de la recuperation des points par partie")
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Erreur:', error);
-                            alert('Une erreur est survenue lors de la récupération des données');
-                        });
 
                     const modal = new bootstrap.Modal(document.getElementById('modifierDevoirModal'));
                     modal.show();
@@ -296,15 +269,6 @@
                 alert('Une erreur est survenue lors de la récupération des données');
             });
     }
-
-    document.getElementById('nombreParties').addEventListener('input', function(e) {
-        const nombreParties = e.target.value;
-        const container = document.getElementById('pointsParPartieContainer')
-        container.innerHTML = '<label class="form-label">Points par partie</label>'
-        for (let i = 0; i < nombreParties; i++) {
-            container.innerHTML += `<input type="number" class="form-control" step="0.01" name="pointsParPartie[${i}]" required>`
-        }
-    });
 
     document.getElementById('searchInput')?.addEventListener('input', function(e) {
         const searchTerm = e.target.value;

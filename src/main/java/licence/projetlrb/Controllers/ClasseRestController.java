@@ -10,7 +10,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class ClasseRestController {
+public class
+ClasseRestController {
 
     private final ClasseService classeService;
 
@@ -26,19 +27,6 @@ public class ClasseRestController {
     public ResponseDTO<List<Classe>> getAllClasses() {
         return classeService.rechercherClasses();
     }
-
-    /**
-     * Récupère une classe par son ID
-     */
-    @GetMapping("/classe/{id}")
-    public ResponseDTO<Classe> getClasse(@PathVariable Integer id) {
-        try {
-            return classeService.rechercherParId(id);
-        } catch (Exception e) {
-            return ResponseDTO.error("Erreur lors de la récupération de la classe: " + e.getMessage());
-        }
-    }
-
     /**
      * Crée ou met à jour une classe
      */
@@ -48,19 +36,6 @@ public class ClasseRestController {
             return classeService.enregistrer(classe);
         } catch (Exception e) {
             return ResponseDTO.error("Erreur lors de l'enregistrement: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Met à jour une classe existante
-     */
-    @PutMapping("/classe/{id}")
-    public ResponseDTO<Classe> modifier(@PathVariable Integer id, @RequestBody Classe classe) {
-        try {
-            classe.setId(id);  // Assure que l'ID du path correspond à l'objet
-            return classeService.enregistrer(classe);
-        } catch (Exception e) {
-            return ResponseDTO.error("Erreur lors de la modification: " + e.getMessage());
         }
     }
 
