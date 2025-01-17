@@ -93,13 +93,6 @@
                         </button>
                     </div>
                 </div>
-                <div class="search-container">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="mdi mdi-magnify"></i></span>
-                        <input type="text" class="form-control" placeholder="Rechercher un étudiant..."
-                               id="searchInput" th:value="${searchTerm}">
-                    </div>
-                </div>
             </div>
         </div>
         <div class="card-body">
@@ -121,7 +114,8 @@
                             <p class="mb-0">Aucun étudiant trouvé</p>
                         </td>
                     </tr>
-                    <tr th:each="etudiant : ${etudiants}">
+                    <tr th:each="etudiant : ${etudiants}"
+                        th:attr="data-has-class=${etudiant.idClasse != null}">
                         <td>
                             <img th:if="${etudiant.photo}" th:src="${etudiant.photo}" class="student-photo" alt="Photo">
                             <i th:unless="${etudiant.photo}" class="mdi mdi-account-circle text-secondary" style="font-size: 40px;"></i>
@@ -261,21 +255,18 @@
         const tbody = document.querySelector('table tbody');
         const rows = Array.from(tbody.getElementsByTagName('tr'));
 
+        // Réinitialiser la visibilité de toutes les lignes avant d'appliquer le filtre
+        rows.forEach(row => row.style.display = '');
+
         rows.forEach(row => {
-            const classeCell = row.querySelector('td:nth-child(4) .badge');
-            if (!classeCell) return;
+            const hasClass = row.getAttribute('data-has-class') === 'true';
 
-            // Correction ici : On récupère le texte de la classeement
-            const classeText = classeCell.textContent.trim();
-            const hasClasse = classeText !== 'Non assigné';
-
-            if (filtre === 'tous') {
-                row.style.display = '';
-            } else if (filtre === 'avecClasse') {
-                row.style.display = hasClasse ? '' : 'none';
+            if (filtre === 'avecClasse') {
+                if (!hasClass) row.style.display = 'none';
             } else if (filtre === 'sansClasse') {
-                row.style.display = !hasClasse ? '' : 'none';
+                if(hasClass) row.style.display = 'none';
             }
+
         });
 
         // Vérifier s'il y a des lignes visibles
